@@ -16,9 +16,13 @@ import com.pengxh.daily.app.R
 import com.pengxh.daily.app.utils.ApplicationEvent
 import com.pengxh.daily.app.utils.Constant
 import com.pengxh.daily.app.utils.EmailManager
+import com.pengxh.daily.app.utils.HolidayManager
 import com.pengxh.daily.app.utils.HttpRequestManager
 import com.pengxh.daily.app.utils.LogFileManager
 import com.pengxh.kt.lite.utils.SaveKeyValues
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
@@ -100,6 +104,17 @@ class ForegroundRunningService : Service() {
 
     private fun resetTask() {
         if (!isTaskReset) {
+            // 检查是否为节假日需要跳过
+            if (!HolidayManager.shouldExecuteTask()) {
+                isTaskReset = true
+                LogFileManager.writeLog("今天是节假日，跳过任务重置")
+                val hour = SaveKeyValues.getValue(
+                    Constant.RESET_TIME_KEY, Constant.DEFAULT_RESET_HOUR
+                ) as Int
+                startResetTaskTimer(hour)
+                return
+            }
+
             val autoStart = SaveKeyValues.getValue(Constant.TASK_AUTO_START_KEY, true) as Boolean
             val message = if (autoStart) {
                 EventBus.getDefault().post(ApplicationEvent.ResetDailyTask)

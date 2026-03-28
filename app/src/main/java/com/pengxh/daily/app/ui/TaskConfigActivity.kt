@@ -14,6 +14,7 @@ import com.pengxh.daily.app.sqlite.bean.DailyTaskBean
 import com.pengxh.daily.app.sqlite.bean.EmailConfigBean
 import com.pengxh.daily.app.utils.ApplicationEvent
 import com.pengxh.daily.app.utils.Constant
+import com.pengxh.daily.app.utils.HolidayManager
 import com.pengxh.kt.lite.base.KotlinBaseActivity
 import com.pengxh.kt.lite.extensions.convertColor
 import com.pengxh.kt.lite.extensions.getStatusBarHeight
@@ -70,6 +71,12 @@ class TaskConfigActivity : KotlinBaseActivity<ActivityTaskConfigBinding>() {
         } else {
             binding.minuteRangeLayout.visibility = View.GONE
         }
+
+        // 初始化节假日配置
+        val holidayEnabled = HolidayManager.isHolidayEnabled()
+        binding.holidaySwitch.isChecked = holidayEnabled
+        binding.weekendWorkSwitch.isChecked = HolidayManager.isWorkOnWeekend()
+        binding.weekendWorkLayout.visibility = if (holidayEnabled) View.VISIBLE else View.GONE
     }
 
     override fun initEvent() {
@@ -124,6 +131,15 @@ class TaskConfigActivity : KotlinBaseActivity<ActivityTaskConfigBinding>() {
             } else {
                 binding.minuteRangeLayout.visibility = View.GONE
             }
+        }
+
+        binding.holidaySwitch.setOnCheckedChangeListener { _, isChecked ->
+            HolidayManager.setHolidayEnabled(isChecked)
+            binding.weekendWorkLayout.visibility = if (isChecked) View.VISIBLE else View.GONE
+        }
+
+        binding.weekendWorkSwitch.setOnCheckedChangeListener { _, isChecked ->
+            HolidayManager.setWorkOnWeekend(isChecked)
         }
 
         binding.minuteRangeLayout.setOnClickListener {
